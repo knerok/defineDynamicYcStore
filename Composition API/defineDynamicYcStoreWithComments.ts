@@ -13,7 +13,7 @@ const scopedStoresIdsByScope: {[scopeId in string]: ScopedStoresIds} = {} // {12
 //  Содержит ссылки на созданные ранее scoped сторы. Ключом является piniaId, значением - стор
 const scopedStoresByPiniaId: {[piniaId in string]: ReturnType<typeof defineStore>} = {}
 
-export const defineScopeYcStore: typeof defineStore = function( // сигнатуру функции скопировал из сорсов defineStore (https://github.com/vuejs/pinia/blob/v2/packages/pinia/src/store.ts#L852)
+export const defineScopeYcStore: typeof defineStore = function( // Сигнатуру функции скопировал из сорсов defineStore (https://github.com/vuejs/pinia/blob/v2/packages/pinia/src/store.ts#L852)
   idOrOptions: any,
   setup?: any,
   setupOptions?: any,
@@ -36,8 +36,8 @@ export const defineScopeYcStore: typeof defineStore = function( // сигнат�
       throw new Error('Scoped stores can not be used outside of Vue component')
     }
 
-    const scopeId = currentInstance.uid // если опасаетесь использовать uid компонента в качестве идентификатора скоупа - можно самостоятельно проставлять всем компонентам уникальный id с помощью простенького плагина(см. пример) и опираться на него
-    let piniaId: string | undefined // id нужного нам scoped стора в pinia
+    const scopeId = currentInstance.uid // Если опасаетесь использовать uid компонента в качестве идентификатора скоупа - можно самостоятельно проставлять всем компонентам уникальный id с помощью простенького плагина(https://github.com/vuejs/vue/issues/5886#issuecomment-308647738) и опираться на него
+    let piniaId: string | undefined // Id нужного нам scoped стора в pinia
 
     // Проверяем, создавался ли ранее нужный нам стор в текущем компоненте или компонентах-предках. Пытаемся получить piniaId scoped стора
     if (scopedStoresIdsByScope?.[scopeId]?.[id]) {
@@ -75,7 +75,7 @@ export const defineScopeYcStore: typeof defineStore = function( // сигнат�
 
       if (!pinia || !piniaId) return
 
-      delete pinia.state.value[piniaId] // взял из api документации pinia https://pinia.vuejs.org/api/interfaces/pinia._StoreWithState.html#Methods-$dispose
+      delete pinia.state.value[piniaId] // Взял из api документации pinia (https://pinia.vuejs.org/api/interfaces/pinia._StoreWithState.html#Methods-$dispose)
       delete scopedStoresByPiniaId[piniaId]
       delete scopedStoresIdsByScope[scopeId]
     })
@@ -84,7 +84,7 @@ export const defineScopeYcStore: typeof defineStore = function( // сигнат�
     return scopedStoresByPiniaId[piniaId](pinia, hot)
   }
 
-  useStore.$id = String(Math.random()) // в scoped сторах id присвается позже, в момент использования стора. Нужно лишь для того чтобы типизация не ругалась
+  useStore.$id = String(Math.random()) // В scoped сторах id присвается позже, в момент использования стора. Нужно лишь для того чтобы типизация не ругалась
 
   return useStore
 }
