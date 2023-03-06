@@ -6,7 +6,7 @@ const scopedStoresIdsByScope: {[scopeId in string]: ScopedStoresIds} = {}
 
 const scopedStoresByPiniaId: {[piniaId in string]: ReturnType<typeof defineStore>} = {}
 
-export const defineScopeYcStore: typeof defineStore = function(
+export const defineScopedYcStore: typeof defineStore = function(
   idOrOptions: any,
   setup?: any,
   setupOptions?: any,
