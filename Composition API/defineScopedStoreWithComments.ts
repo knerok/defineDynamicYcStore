@@ -13,7 +13,7 @@ const scopedStoresIdsByScope: {[scopeId in string]: ScopedStoresIds} = {} // {12
 //  Содержит ссылки на созданные ранее scoped сторы. Ключом является piniaId, значением - стор
 const scopedStoresByPiniaId: {[piniaId in string]: ReturnType<typeof defineStore>} = {}
 
-export const defineScopedYcStore: typeof defineStore = function( // Сигнатуру функции скопировал из сорсов defineStore (https://github.com/vuejs/pinia/blob/v2/packages/pinia/src/store.ts#L852)
+export const defineScopedStore: typeof defineStore = function( // Сигнатуру функции скопировал из сорсов defineStore (https://github.com/vuejs/pinia/blob/v2/packages/pinia/src/store.ts#L852)
   idOrOptions: any,
   setup?: any,
   setupOptions?: any,
