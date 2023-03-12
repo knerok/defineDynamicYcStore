@@ -1,5 +1,5 @@
 import {defineStore, Pinia, StoreDefinition, StoreGeneric, getActivePinia} from 'pinia'
-import {provide, inject, getCurrentInstance, onUnmounted} from 'vue'
+import {inject, getCurrentInstance, onUnmounted, ComponentInternalInstance, InjectionKey} from 'vue'
 
 // id и piniaId.
 // id - это первый аргумент функции defineScopeYcStore. К примеру, RecordAcquiringPaymentRedesign.
@@ -67,7 +67,9 @@ export const defineScopedStore: typeof defineStore = function( // Сигнату
     scopedStoresIdsByScope[scopeId][id] = piniaId
 
     // После создания стора провайдим его piniaId всем потомкам. Так они смогут получить к нему доступ
-    provide(id, piniaId)
+    // Для совместимости с Options API и map-фукнциями пришлось добавить в provide возможность задавать извне инстанс компонента-провайдера. Подробнее ниже
+    // Важно! Если работаете только в Composition API - лучше заменить на обычный provide
+    provideInInstance(id, piniaId, currentInstance)
 
     // Удаляем стор при удалении скоупа. Нет скоупа - нет scoped стора
     onUnmounted(() => {
@@ -78,13 +80,29 @@ export const defineScopedStore: typeof defineStore = function( // Сигнату
       delete pinia.state.value[piniaId] // Взял из api документации pinia (https://pinia.vuejs.org/api/interfaces/pinia._StoreWithState.html#Methods-$dispose)
       delete scopedStoresByPiniaId[piniaId]
       delete scopedStoresIdsByScope[scopeId]
-    })
+    }, currentInstance)
 
     // Возвращаем созданный стор
     return scopedStoresByPiniaId[piniaId](pinia, hot)
   }
 
-  useStore.$id = String(Math.random()) // В scoped сторах id присвается позже, в момент использования стора. Нужно лишь для того чтобы типизация не ругалась
+  useStore.$id = String(Date.now()) // В scoped сторах id присваивается позже, в момент использования стора. Нужно лишь для типизации
 
   return useStore
+}
+
+// Vue core team убрали provides из общедоступного типа ComponentInternalInstance, пришлось его вернуть. Типизацию скопировал из сорсов ComponentInternalInstance (https://github.com/vuejs/core/blob/98f1934811d8c8774cd01d18fa36ea3ec68a0a54/packages/runtime-core/src/component.ts#L245)
+type ComponentInternalInstanceWithProvides = ComponentInternalInstance & {provides?: Record<string, unknown>}
+
+// Пришлось добавить в provide возможность задавать извне инстанс компонента-провайдера. Код практически полностью скопировал из сорсов provide, единственное отличие - currentInstance передается аргументом извне (https://github.com/vuejs/core/blob/98f1934811d8c8774cd01d18fa36ea3ec68a0a54/packages/runtime-core/src/apiInject.ts#L8)
+const provideInInstance = <T>(key: InjectionKey<T> | string | number, value: T, instance: ComponentInternalInstanceWithProvides) => {
+  let provides = instance.provides!
+
+  const parentProvides =
+    instance.parent && (instance.parent as ComponentInternalInstanceWithProvides).provides
+  if (parentProvides === provides) {
+    provides = instance.provides = Object.create(parentProvides)
+  }
+
+  provides[key as string] = value
 }
