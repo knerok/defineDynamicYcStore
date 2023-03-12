@@ -1,5 +1,5 @@
 import {defineStore, Pinia, StoreDefinition, StoreGeneric, getActivePinia} from 'pinia'
-import {provide, inject, getCurrentInstance, onUnmounted} from 'vue'
+import {inject, getCurrentInstance, onUnmounted, ComponentInternalInstance, InjectionKey} from 'vue'
 
 type ScopedStoresIds = {[id in string]: string}
 const scopedStoresIdsByScope: {[scopeId in string]: ScopedStoresIds} = {}
@@ -53,7 +53,7 @@ export const defineScopedStore: typeof defineStore = function(
     scopedStoresIdsByScope[scopeId] = scopedStoresIdsByScope[scopeId] ?? {}
     scopedStoresIdsByScope[scopeId][id] = piniaId
 
-    provide(id, piniaId)
+    provideInInstance(id, piniaId, currentInstance)
 
     onUnmounted(() => {
       const pinia = getActivePinia()
@@ -63,12 +63,26 @@ export const defineScopedStore: typeof defineStore = function(
       delete pinia.state.value[piniaId]
       delete scopedStoresByPiniaId[piniaId]
       delete scopedStoresIdsByScope[scopeId]
-    })
+    }, currentInstance)
 
     return scopedStoresByPiniaId[piniaId](pinia, hot)
   }
 
-  useStore.$id = String(Math.random())
+  useStore.$id = String(Date.now())
 
   return useStore
+}
+
+type ComponentInternalInstanceWithProvides = ComponentInternalInstance & {provides?: Record<string, unknown>}
+
+const provideInInstance = <T>(key: InjectionKey<T> | string | number, value: T, instance: ComponentInternalInstanceWithProvides) => {
+  let provides = instance.provides!
+
+  const parentProvides =
+    instance.parent && (instance.parent as ComponentInternalInstanceWithProvides).provides
+  if (parentProvides === provides) {
+    provides = instance.provides = Object.create(parentProvides)
+  }
+
+  provides[key as string] = value
 }
